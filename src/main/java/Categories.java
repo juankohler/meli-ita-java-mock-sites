@@ -3,7 +3,7 @@ public class Categories {
     private String id;
     private String name;
 
-    public Categories() { // el constructor por defecto lo usa el compilador si no creo ningun constructor
+    public Categories() {
     }
 
     public Categories(String id, String name) {
