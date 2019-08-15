@@ -1,7 +1,7 @@
 // Para poder usar el mock server tenemos que importar de manera estatica una libreria
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import com.google.gson.Gson;
-import com.google.gson.stream.JsonReader;
+// import com.google.gson.stream.JsonReader;
 import org.mockserver.client.server.MockServerClient;
 import org.mockserver.model.Delay;
 import org.mockserver.model.Header;
@@ -10,6 +10,14 @@ import java.io.*;
 import java.util.concurrent.TimeUnit;
 import static org.mockserver.model.HttpResponse.response;
 import static org.mockserver.model.HttpRequest.request;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+
 
 public class Server {
 
@@ -33,16 +41,57 @@ public class Server {
 
     public static void main(String[] args) throws FileNotFoundException {
 
-        Gson gson = new Gson();
-        Site site = new Site("MLA", "Argentina");
-        JsonReader reader = new JsonReader(new FileReader("/Users/aziemeckibur/IdeaProjects/mock/src/main/java/sites.json"));
-        Site[] sites = gson.fromJson(reader, Site[].class);
-        consulta("GET", "/sites", 200, "application/json", gson.toJson(sites), 1000);
-        JsonReader readerCategories = new JsonReader(new FileReader("/Users/aziemeckibur/IdeaProjects/mock/src/main/java/MLA.json"));
-        Site[] categories = gson.fromJson(readerCategories, Site[].class);
-        consulta("GET", "/sites/.*/categories", 200, "application/json", gson.toJson(categories), 1000);
-        // consulta("GET", "/sites/MLA/categories/.*", 200, "application/json", gson.toJson(categories[1]), 1000);
-        // consulta("GET", "/sites/.*", 200, "application/json", gson.toJson(sites[1]), 1000);
+        try {
+
+            URL url = new URL("https://api.mercadolibre.com/sites"); // Siempre que instancio un objeto java que no es una interfaz lo instancio con new
+            URL url_categories = new URL("https://api.mercadolibre.com/sites/MLA/categories");
+
+            try {
+
+                URLConnection urlConnection = url.openConnection();
+                URLConnection urlConnection_categories = url_categories.openConnection();
+
+                urlConnection.setRequestProperty("Accept", "application/json");
+                urlConnection_categories.setRequestProperty("Accept", "application/json");
+
+                if ( (urlConnection instanceof HttpURLConnection) && (urlConnection_categories instanceof HttpURLConnection)) {
+
+                    HttpURLConnection connection = (HttpURLConnection) urlConnection;
+                    HttpURLConnection connection_categories = (HttpURLConnection) urlConnection_categories;
+
+                    BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                    BufferedReader in_categories = new BufferedReader(new InputStreamReader(connection_categories.getInputStream()));
+
+                    Gson gson = new Gson();
+
+                    Site[] sites = gson.fromJson(in, Site[].class);
+                    Site[] sites_categories = gson.fromJson(in_categories, Site[].class);
+
+                    //Operador<Site> operator = new Operador<Site>();
+
+                    //Site.criteria = Site.Criteria.NAME;
+                    //Operador.ordenar(sites);
+
+                    consulta("GET", "/sites", 200, "application/json", gson.toJson(sites), 1000);
+                    consulta("GET", "/sites/.*/categories", 200, "application/json", gson.toJson(sites_categories), 1000);
+
+                } else {
+                    System.out.println("URL inválida");
+                    return;
+                }
+
+        } catch (IOException e) {
+
+            e.printStackTrace();
+
+        }
+
+
+    } catch (MalformedURLException exception) {
+
+        System.out.println(exception.getMessage());
+
+    }
     }
 }
 
@@ -91,3 +140,16 @@ public class Server {
 
         }
         */
+
+/*
+        Gson gson = new Gson();
+        Site site = new Site("MLA", "Argentina");
+        JsonReader reader = new JsonReader(new FileReader("/Users/aziemeckibur/IdeaProjects/mock/src/main/java/sites.json"));
+        Site[] sites = gson.fromJson(reader, Site[].class);
+        consulta("GET", "/sites", 200, "application/json", gson.toJson(sites), 1000);
+        JsonReader readerCategories = new JsonReader(new FileReader("/Users/aziemeckibur/IdeaProjects/mock/src/main/java/MLA.json"));
+        Site[] categories = gson.fromJson(readerCategories, Site[].class);
+        consulta("GET", "/sites/.*categories", 200, "application/json", gson.toJson(categories), 1000);
+        consulta("GET", "/sites/MLA/categories/.*", 200, "application/json", gson.toJson(categories[1]), 1000);
+        consulta("GET", "/sites/.*", 200, "application/json", gson.toJson(sites[1]), 1000);
+*/
